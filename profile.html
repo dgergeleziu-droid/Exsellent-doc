@@ -6,73 +6,107 @@
   <title>Личный кабинет | Exsellent</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #0f1115; color: #e6e6e6; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .container { background: #1a1d23; padding: 2rem; border-radius: 12px; border: 1px solid #2e333d; width: 100%; max-width: 400px; }
+    .container { background: #1a1d23; padding: 2rem; border-radius: 12px; border: 1px solid #2e333d; width: 100%; max-width: 450px; box-sizing: border-box; }
     h1 { margin-top: 0; text-align: center; font-size: 1.5rem; }
-    input, select { width: 100%; padding: 0.75rem; margin: 0.5rem 0; background: #0f1115; border: 1px solid #2e333d; border-radius: 6px; color: white; box-sizing: border-box; }
+    input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; background: #0f1115; border: 1px solid #2e333d; border-radius: 6px; color: white; box-sizing: border-box; }
     button { width: 100%; padding: 0.75rem; margin-top: 1rem; background: #2f6fed; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; }
     button:hover { background: #1e5bd8; }
     .link-btn { background: transparent; color: #2f6fed; margin-top: 0.5rem; }
     .link-btn:hover { background: transparent; text-decoration: underline; }
-    .hidden { display: none; }
-    .admin-panel { border: 1px solid #6ee787; background: rgba(110, 231, 135, 0.1); padding: 1rem; border-radius: 6px; margin-top: 1.5rem; text-align: center; }
+    .hidden { display: none !important; }
+    
+    /* Стили как на форуме */
+    .forum-profile { text-align: center; }
+    .avatar { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #2f6fed; margin: 0 auto 1rem; background: #0f1115; }
+    .username { font-size: 1.4rem; font-weight: bold; margin: 0; }
+    .role-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-top: 0.5rem; text-transform: uppercase; }
+    .role-admin { background: #6ee787; color: #000; }
+    .role-user { background: #3a3f4a; color: #e6e6e6; }
+    .stats { display: flex; justify-content: space-around; border-top: 1px solid #2e333d; border-bottom: 1px solid #2e333d; padding: 1rem 0; margin: 1.5rem 0; }
+    .stat-item { display: flex; flex-direction: column; }
+    .stat-value { font-weight: bold; font-size: 1.1rem; }
+    .stat-label { font-size: 0.8rem; color: #a0a0a0; }
+    .admin-panel { border: 1px solid #6ee787; background: rgba(110, 231, 135, 0.1); padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
     .admin-panel a { display: inline-block; background: #6ee787; color: #000; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- Форма Входа -->
+  <!-- Вход -->
   <div id="login-view">
-    <h1>Вход в систему</h1>
+    <h1>Вход на форум</h1>
     <input type="text" id="login-user" placeholder="Логин">
     <input type="password" id="login-pass" placeholder="Пароль">
     <button onclick="login()">Войти</button>
-    <button class="link-btn" onclick="toggleView('register')">Нет аккаунта? Зарегистрироваться</button>
+    <button class="link-btn" onclick="toggleView('register')">Нет аккаунта? Регистрация</button>
   </div>
 
-  <!-- Форма Регистрации -->
+  <!-- Регистрация -->
   <div id="register-view" class="hidden">
     <h1>Регистрация</h1>
     <input type="text" id="reg-user" placeholder="Придумайте логин">
     <input type="password" id="reg-pass" placeholder="Придумайте пароль">
-    <select id="reg-role">
-      <option value="user">Гражданин</option>
-      <option value="admin">Администратор</option>
-    </select>
+    <p style="font-size: 0.8rem; color: #a0a0a0; margin-top: 0.5rem;">Все новые аккаунты получают группу «Гражданин».</p>
     <button onclick="register()">Создать аккаунт</button>
     <button class="link-btn" onclick="toggleView('login')">Уже есть аккаунт? Войти</button>
   </div>
 
-  <!-- Профиль (виден после входа) -->
+  <!-- Профиль -->
   <div id="profile-view" class="hidden">
-    <h1>Личный кабинет</h1>
-    <p>Добро пожаловать, <strong id="profile-name"></strong>!</p>
-    <p>Ваша роль: <span id="profile-role"></span></p>
-    
-    <div id="admin-block" class="admin-panel hidden">
-      <p>Вам доступна панель управления базой данных.</p>
-      <a href="/admin.html">Перейти в Админ-панель</a>
-    </div>
+    <div class="forum-profile">
+      <img id="profile-avatar" class="avatar" src="" alt="Avatar">
+      <h1 class="username" id="profile-name"></h1>
+      <span id="profile-badge" class="role-badge"></span>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-value" id="profile-date"></span>
+          <span class="stat-label">Регистрация</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">0</span>
+          <span class="stat-label">Сообщений</span>
+        </div>
+      </div>
 
-    <button onclick="logout()" style="background: #3a0e14; margin-top: 1.5rem;">Выйти</button>
-    <button class="link-btn" onclick="window.location.href='/'">На главную</button>
+      <div id="admin-block" class="admin-panel hidden">
+        <p>Вы — Администратор.</p>
+        <a href="/admin.html">Панель управления</a>
+      </div>
+      
+      <button onclick="logout()" style="background: #3a0e14;">Выйти</button>
+      <button class="link-btn" onclick="window.location.href='/'">На главную</button>
+    </div>
   </div>
 </div>
 
 <script>
-  // При загрузке проверяем, есть ли сессия
-  window.onload = function() {
-    const user = JSON.parse(localStorage.getItem('exc_user'));
-    if (user) {
-      showProfile(user);
+  let globalUsers = []; // Здесь будем хранить базу с GitHub
+
+  // Загружаем глобальную базу при старте
+  async function loadGlobalUsers() {
+    try {
+      const res = await fetch('/data/users.json');
+      if (res.ok) {
+        const data = await res.json();
+        globalUsers = data.users || [];
+      }
+    } catch (e) {
+      console.log('Ошибка загрузки базы пользователей', e);
     }
+  }
+
+  window.onload = async function() {
+    await loadGlobalUsers();
+    const user = JSON.parse(localStorage.getItem('exc_user'));
+    if (user) showProfile(user);
   };
 
   function toggleView(view) {
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('register-view').classList.add('hidden');
     document.getElementById('profile-view').classList.add('hidden');
-    
     if (view === 'login') document.getElementById('login-view').classList.remove('hidden');
     if (view === 'register') document.getElementById('register-view').classList.remove('hidden');
     if (view === 'profile') document.getElementById('profile-view').classList.remove('hidden');
@@ -81,22 +115,22 @@
   function register() {
     const username = document.getElementById('reg-user').value.trim();
     const password = document.getElementById('reg-pass').value.trim();
-    const role = document.getElementById('reg-role').value;
 
     if (!username || !password) return alert('Заполните все поля!');
 
-    // В реальности здесь должен быть запрос к БД. Для статики используем LocalStorage
-    let users = JSON.parse(localStorage.getItem('exc_users') || '[]');
-    
-    if (users.find(u => u.username === username)) {
-      return alert('Пользователь с таким логином уже существует!');
+    let localUsers = JSON.parse(localStorage.getItem('exc_users') || '[]');
+    if (localUsers.find(u => u.username === username) || globalUsers.find(u => u.username === username)) {
+      return alert('Этот логин уже занят!');
     }
 
-    const newUser = { username, password, role };
-    users.push(newUser);
-    localStorage.setItem('exc_users', JSON.stringify(users));
+    // Генерируем аватарку и дату
+    const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+    const joinedDate = new Date().toLocaleDateString('ru-RU');
+
+    const newUser = { username, password, role: 'user', avatar: avatarUrl, joined: joinedDate };
+    localUsers.push(newUser);
+    localStorage.setItem('exc_users', JSON.stringify(localUsers));
     
-    // Автоматический вход после регистрации
     localStorage.setItem('exc_user', JSON.stringify(newUser));
     showProfile(newUser);
   }
@@ -105,8 +139,14 @@
     const username = document.getElementById('login-user').value.trim();
     const password = document.getElementById('login-pass').value.trim();
 
-    let users = JSON.parse(localStorage.getItem('exc_users') || '[]');
-    const user = users.find(u => u.username === username && u.password === password);
+    // 1. Ищем в локальной базе
+    let localUsers = JSON.parse(localStorage.getItem('exc_users') || '[]');
+    let user = localUsers.find(u => u.username === username && u.password === password);
+
+    // 2. Если нет, ищем в глобальной базе (с GitHub)
+    if (!user) {
+      user = globalUsers.find(u => u.username === username && u.password === password);
+    }
 
     if (user) {
       localStorage.setItem('exc_user', JSON.stringify(user));
@@ -119,11 +159,17 @@
   function showProfile(user) {
     toggleView('profile');
     document.getElementById('profile-name').textContent = user.username;
-    document.getElementById('profile-role').textContent = user.role === 'admin' ? 'Администратор' : 'Гражданин';
+    document.getElementById('profile-avatar').src = user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`;
+    document.getElementById('profile-date').textContent = user.joined || 'Неизвестно';
     
+    const badge = document.getElementById('profile-badge');
     if (user.role === 'admin') {
+      badge.textContent = 'Администратор';
+      badge.className = 'role-badge role-admin';
       document.getElementById('admin-block').classList.remove('hidden');
     } else {
+      badge.textContent = 'Гражданин';
+      badge.className = 'role-badge role-user';
       document.getElementById('admin-block').classList.add('hidden');
     }
   }
