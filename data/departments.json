@@ -1,0 +1,20 @@
+{
+  "departments": [
+    {
+      "id": "gov",
+      "name": "Правительство",
+      "code": "GOV 01",
+      "description": "Приказы, распоряжения и кадровые решения кабинета.",
+      "head": "Vice-Governor",
+      "staff": []
+    },
+    {
+      "id": "doj",
+      "name": "Министерство Юстиции",
+      "code": "DOJ 02",
+      "description": "Ордера, постановления прокуратуры и запросы.",
+      "head": "Attorney General",
+      "staff": []
+    }
+  ]
+}
