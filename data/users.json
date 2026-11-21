@@ -1,0 +1,11 @@
+{
+  "users": [
+    {
+      "username": "Admin",
+      "password": "123456",
+      "role": "admin",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Admin",
+      "joined": "2024-01-01"
+    }
+  ]
+}
