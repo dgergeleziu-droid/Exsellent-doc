@@ -5,36 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Админ-панель | Exsellent</title>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; background: #0f1115; color: #e6e6e6; }
+    body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background: #0f1115; color: #e6e6e6; }
     h1 { font-size: 1.5rem; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2e333d; padding-bottom: 10px; }
+    .tabs button { background: #1a1d23; border: 1px solid #2e333d; color: #a0a0a0; padding: 8px 16px; cursor: pointer; border-radius: 6px; }
+    .tabs button.active { background: #2f6fed; color: white; border-color: #2f6fed; }
     .warning { background: #3a2a00; border-left: 4px solid #ffb300; padding: 1rem; margin: 1rem 0; font-size: 0.9rem; }
     label { display: block; margin-top: 1rem; color: #a0a0a0; font-size: 0.9rem;}
-    input, textarea { width: 100%; padding: 0.6rem; margin-top: 0.3rem; background: #1a1d23; border: 1px solid #2e333d; border-radius: 6px; color: #e6e6e6; font-family: monospace; box-sizing: border-box;}
+    input, textarea, select { width: 100%; padding: 0.6rem; margin-top: 0.3rem; background: #1a1d23; border: 1px solid #2e333d; border-radius: 6px; color: #e6e6e6; font-family: monospace; box-sizing: border-box;}
     button { margin-top: 1rem; padding: 0.6rem 1.2rem; background: #2f6fed; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;}
     button:hover { background: #1e5bd8; }
     .status { margin-top: 1rem; padding: 0.6rem; border-radius: 6px; display: none; }
     .ok { background: #0e3a1f; color: #6ee787; }
     .err { background: #3a0e14; color: #ff7b72; }
+    
+    /* Таблица юзеров */
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #2e333d; }
+    th { color: #a0a0a0; font-weight: normal; font-size: 0.9rem; }
+    .avatar-small { width: 32px; height: 32px; border-radius: 50%; background: #0f1115; }
   </style>
 </head>
 <body>
-  <h1>Админ-панель (База Данных)</h1>
-  <div class="warning">
-    <strong>Внимание:</strong> для сохранения нужен GitHub Token (Fine-grained с правами Contents: Read and write). Токен не сохраняется на сервере.
+  <h1>Панель Управления</h1>
+  
+  <div class="tabs">
+    <button class="active" onclick="switchTab('users')">Пользователи</button>
+    <button onclick="switchTab('docs')">Документы (БД)</button>
   </div>
 
-  <label>GitHub Token <input type="password" id="token" placeholder="ghp_..."></label>
-  <label>Владелец репозитория <input id="owner" value="dgergeleziu-droid"></label>
-  <label>Репозиторий <input id="repo" value="Exsellent-doc"></label>
-  <label>Путь к файлу <input id="path" value="data/administration.json"></label>
+  <!-- Вкладка 1: Пользователи -->
+  <div id="tab-users">
+    <div class="warning">
+      <strong>Внимание:</strong> для сохранения нужен GitHub Token (Fine-grained с правами Contents: Read and write). Токен не сохраняется на сервере.
+    </div>
+    <label>GitHub Token <input type="password" id="token" placeholder="ghp_..."></label>
+    
+    <button onclick="loadUsers()">Загрузить базу пользователей (data/users.json)</button>
+    
+    <div id="users-table-container"></div>
+    <button id="saveUsersBtn" onclick="saveUsers()" style="display:none; background: #6ee787; color: #000;">Сохранить изменения в GitHub</button>
+    <div class="status" id="status-users"></div>
+  </div>
 
-  <button onclick="loadFile()">Загрузить текущие данные</button>
-  <div id="editor" style="margin-top:1rem;"></div>
-  <button id="saveBtn" onclick="saveFile()" style="display:none;">Сохранить изменения</button>
-  <div class="status" id="status"></div>
+  <!-- Вкладка 2: Документы -->
+  <div id="tab-docs" class="hidden">
+    <label>Путь к файлу <input id="doc-path" value="data/administration.json"></label>
+    <button onclick="loadDoc()">Загрузить текущие данные</button>
+    <div id="editor" style="margin-top:1rem;"></div>
+    <button id="saveDocBtn" onclick="saveDoc()" style="display:none;">Сохранить изменения</button>
+    <div class="status" id="status-docs"></div>
+  </div>
 
   <script>
-    // ПРОВЕРКА ПРАВ ДОСТУПА
+    // ПРОВЕРКА ПРАВ
     const currentUser = JSON.parse(localStorage.getItem('exc_user'));
     if (!currentUser || currentUser.role !== 'admin') {
       alert('Доступ запрещен. Войдите как Администратор.');
@@ -42,24 +66,111 @@
     }
 
     const apiBase = 'https://api.github.com/repos';
-    let currentSha = null;
-    const statusEl = document.getElementById('status');
+    const owner = 'dgergeleziu-droid';
+    const repo = 'Exsellent-doc';
+    
+    let usersSha = null;
+    let usersData = [];
+    
+    let docSha = null;
 
-    function showStatus(msg, isError) {
-      statusEl.textContent = msg;
-      statusEl.className = 'status ' + (isError ? 'err' : 'ok');
-      statusEl.style.display = 'block';
+    function switchTab(tab) {
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-users').classList.add('hidden');
+      document.getElementById('tab-docs').classList.add('hidden');
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+    }
+
+    function showStatus(id, msg, isError) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'status ' + (isError ? 'err' : 'ok');
+      el.style.display = 'block';
     }
 
     function encodeBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
     function decodeBase64(str) { return decodeURIComponent(escape(atob(str))); }
+    function getToken() { return document.getElementById('token').value.trim(); }
 
-    async function loadFile() {
-      const token = document.getElementById('token').value.trim();
-      const owner = document.getElementById('owner').value.trim();
-      const repo = document.getElementById('repo').value.trim();
-      const path = document.getElementById('path').value.trim();
-      if (!token) return showStatus('Введите токен!', true);
+    // --- ЛОГИКА ПОЛЬЗОВАТЕЛЕЙ ---
+    async function loadUsers() {
+      const token = getToken();
+      if (!token) return showStatus('status-users', 'Введите токен!', true);
+
+      try {
+        const res = await fetch(`${apiBase}/${owner}/${repo}/contents/data/users.json`, {
+          headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+        });
+        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+        const data = await res.json();
+        usersSha = data.sha;
+        
+        let content = Array.isArray(data.content) ? decodeBase64(data.content.join('')) : decodeBase64(data.content);
+        usersData = JSON.parse(content).users;
+
+        renderUsersTable();
+        document.getElementById('saveUsersBtn').style.display = 'inline-block';
+        showStatus('status-users', 'База пользователей загружена.', false);
+      } catch (e) {
+        showStatus('status-users', 'Ошибка загрузки: ' + e.message, true);
+      }
+    }
+
+    function renderUsersTable() {
+      let html = `<table><tr><th>Аватар</th><th>Логин</th><th>Дата рег.</th><th>Роль</th></tr>`;
+      usersData.forEach((u, index) => {
+        html += `<tr>
+          <td><img src="${u.avatar}" class="avatar-small"></td>
+          <td>${u.username}</td>
+          <td>${u.joined}</td>
+          <td>
+            <select onchange="changeRole(${index}, this.value)">
+              <option value="user" ${u.role === 'user' ? 'selected' : ''}>Гражданин</option>
+              <option value="moderator" ${u.role === 'moderator' ? 'selected' : ''}>Модератор</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Администратор</option>
+            </select>
+          </td>
+        </tr>`;
+      });
+      html += `</table>`;
+      document.getElementById('users-table-container').innerHTML = html;
+    }
+
+    function changeRole(index, newRole) {
+      usersData[index].role = newRole;
+    }
+
+    async function saveUsers() {
+      const token = getToken();
+      if (!token || !usersSha) return showStatus('status-users', 'Сначала загрузите файл!', true);
+
+      const content = JSON.stringify({ users: usersData }, null, 2);
+
+      try {
+        const res = await fetch(`${apiBase}/${owner}/${repo}/contents/data/users.json`, {
+          method: 'PUT',
+          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Обновление базы пользователей`,
+            content: encodeBase64(content),
+            sha: usersSha
+          })
+        });
+        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+        const data = await res.json();
+        usersSha = data.content.sha;
+        showStatus('status-users', 'База пользователей успешно обновлена!', false);
+      } catch (e) {
+        showStatus('status-users', 'Ошибка сохранения: ' + e.message, true);
+      }
+    }
+
+    // --- ЛОГИКА ДОКУМЕНТОВ ---
+    async function loadDoc() {
+      const token = getToken();
+      const path = document.getElementById('doc-path').value.trim();
+      if (!token) return showStatus('status-docs', 'Введите токен!', true);
 
       try {
         const res = await fetch(`${apiBase}/${owner}/${repo}/contents/${path}`, {
@@ -67,45 +178,42 @@
         });
         if (!res.ok) throw new Error(`Ошибка ${res.status}`);
         const data = await res.json();
-        currentSha = data.sha;
+        docSha = data.sha;
         
         let content = Array.isArray(data.content) ? decodeBase64(data.content.join('')) : decodeBase64(data.content);
         
         document.getElementById('editor').innerHTML = `<textarea id="jsonContent" rows="15">${content}</textarea>`;
-        document.getElementById('saveBtn').style.display = 'inline-block';
-        showStatus('Файл загружен. Можете редактировать JSON.', false);
+        document.getElementById('saveDocBtn').style.display = 'inline-block';
+        showStatus('status-docs', 'Документ загружен.', false);
       } catch (e) {
-        showStatus('Ошибка загрузки: ' + e.message, true);
+        showStatus('status-docs', 'Ошибка загрузки: ' + e.message, true);
       }
     }
 
-    async function saveFile() {
-      const token = document.getElementById('token').value.trim();
-      const owner = document.getElementById('owner').value.trim();
-      const repo = document.getElementById('repo').value.trim();
-      const path = document.getElementById('path').value.trim();
+    async function saveDoc() {
+      const token = getToken();
+      const path = document.getElementById('doc-path').value.trim();
       const content = document.getElementById('jsonContent').value;
-      
-      if (!token || !currentSha) return showStatus('Сначала загрузите файл!', true);
+      if (!token || !docSha) return showStatus('status-docs', 'Сначала загрузите файл!', true);
 
-      try { JSON.parse(content); } catch (e) { return showStatus('Ошибка: невалидный JSON!', true); }
+      try { JSON.parse(content); } catch (e) { return showStatus('status-docs', 'Ошибка: невалидный JSON!', true); }
 
       try {
         const res = await fetch(`${apiBase}/${owner}/${repo}/contents/${path}`, {
           method: 'PUT',
           headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: `Обновление ${path} из админки`,
+            message: `Обновление ${path}`,
             content: encodeBase64(content),
-            sha: currentSha
+            sha: docSha
           })
         });
         if (!res.ok) throw new Error(`Ошибка ${res.status}`);
         const data = await res.json();
-        currentSha = data.content.sha;
-        showStatus('Успешно сохранено в GitHub!', false);
+        docSha = data.content.sha;
+        showStatus('status-docs', 'Документ успешно сохранен!', false);
       } catch (e) {
-        showStatus('Ошибка сохранения: ' + e.message, true);
+        showStatus('status-docs', 'Ошибка сохранения: ' + e.message, true);
       }
     }
   </script>
