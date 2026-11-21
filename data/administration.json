@@ -2,17 +2,9 @@
   "admins": [
     {
       "id": 1,
-      "name": "John Doe",
+      "name": "Kenny Radcliffe",
       "position": "Vice-Governor",
-      "department": "gov",
-      "appointed": "2025-01-01"
-    },
-    {
-      "id": 2,
-      "name": "Jane Smith",
-      "position": "Attorney General",
-      "department": "doj",
-      "appointed": "2025-02-15"
+      "department": "Правительство"
     }
   ]
 }
