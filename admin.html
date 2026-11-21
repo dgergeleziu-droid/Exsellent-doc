@@ -34,6 +34,13 @@
   <div class="status" id="status"></div>
 
   <script>
+    // ПРОВЕРКА ПРАВ ДОСТУПА
+    const currentUser = JSON.parse(localStorage.getItem('exc_user'));
+    if (!currentUser || currentUser.role !== 'admin') {
+      alert('Доступ запрещен. Войдите как Администратор.');
+      window.location.href = '/profile.html';
+    }
+
     const apiBase = 'https://api.github.com/repos';
     let currentSha = null;
     const statusEl = document.getElementById('status');
