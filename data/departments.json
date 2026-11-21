@@ -15,6 +15,38 @@
       "description": "Ордера, постановления прокуратуры и запросы.",
       "head": "Attorney General",
       "staff": []
+    },
+    {
+      "id": "sc",
+      "name": "Верховный Суд",
+      "code": "SC 03",
+      "description": "Решения суда, определения и судебные повестки.",
+      "head": "Chief Justice",
+      "staff": []
+    },
+    {
+      "id": "bar",
+      "name": "Коллегия Адвокатов",
+      "code": "BAR 04",
+      "description": "Адвокатские лицензии и реестр защитников.",
+      "head": "Bar President",
+      "staff": []
+    },
+    {
+      "id": "sen",
+      "name": "Сенат",
+      "code": "SEN 05",
+      "description": "Законопроекты, слушания и голосования.",
+      "head": "Senate President",
+      "staff": []
+    },
+    {
+      "id": "mof",
+      "name": "Министерство Финансов",
+      "code": "MOF 06",
+      "description": "Бюджет, тендеры и финансовые отчёты.",
+      "head": "Minister of Finance",
+      "staff": []
     }
   ]
 }
