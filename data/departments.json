@@ -1,52 +1,13 @@
 {
   "departments": [
-    {
-      "id": "gov",
-      "name": "Правительство",
-      "code": "GOV 01",
-      "description": "Приказы, распоряжения и кадровые решения кабинета.",
-      "head": "Vice-Governor",
-      "staff": []
-    },
-    {
-      "id": "doj",
-      "name": "Министерство Юстиции",
-      "code": "DOJ 02",
-      "description": "Ордера, постановления прокуратуры и запросы.",
-      "head": "Attorney General",
-      "staff": []
-    },
-    {
-      "id": "sc",
-      "name": "Верховный Суд",
-      "code": "SC 03",
-      "description": "Решения суда, определения и судебные повестки.",
-      "head": "Chief Justice",
-      "staff": []
-    },
-    {
-      "id": "bar",
-      "name": "Коллегия Адвокатов",
-      "code": "BAR 04",
-      "description": "Адвокатские лицензии и реестр защитников.",
-      "head": "Bar President",
-      "staff": []
-    },
-    {
-      "id": "sen",
-      "name": "Сенат",
-      "code": "SEN 05",
-      "description": "Законопроекты, слушания и голосования.",
-      "head": "Senate President",
-      "staff": []
-    },
-    {
-      "id": "mof",
-      "name": "Министерство Финансов",
-      "code": "MOF 06",
-      "description": "Бюджет, тендеры и финансовые отчёты.",
-      "head": "Minister of Finance",
-      "staff": []
-    }
+    { "id": "gov", "name": "Правительство", "code": "GOV 01", "description": "Приказы, распоряжения и кадровые решения кабинета.", "head": "Vice-Governor" },
+    { "id": "doj", "name": "Министерство Юстиции", "code": "DOJ 02", "description": "Ордера, постановления прокуратуры и запросы.", "head": "Attorney General" },
+    { "id": "court", "name": "Судебная Власть", "code": "SC 03", "description": "Решения, определения и судебные повестки.", "head": "Chief Justice" },
+    { "id": "bar", "name": "Адвокатура", "code": "BAR 04", "description": "Доверенности, адвокатские запросы и заявления.", "head": "Bar President" },
+    { "id": "senate", "name": "Сенат", "code": "SEN 05", "description": "Законопроекты, резолюции и протоколы заседаний.", "head": "Senate President" },
+    { "id": "finance", "name": "Министерство Финансов", "code": "MOF 06", "description": "Бюджетные приказы, премии и выплаты.", "head": "Minister of Finance" },
+    { "id": "health", "name": "Министерство Здравоохранения", "code": "MOH 07", "description": "Медицинские заключения и приказы по EMS.", "head": "Minister of Health" },
+    { "id": "security", "name": "Министерство Безопасности", "code": "MNS 08", "description": "Приказы силовых структур и допуски.", "head": "Minister of Security" },
+    { "id": "police", "name": "Полицейский Департамент", "code": "EPD 09", "description": "Рапорты, повышения и служебные приказы.", "head": "Chief of Police" }
   ]
 }
