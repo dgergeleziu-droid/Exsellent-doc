@@ -5,218 +5,100 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Админ-панель | Exsellent</title>
   <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-      background: #0f1115;
-      color: #e6e6e6;
-      line-height: 1.5;
-    }
-    h1 { font-size: 1.6rem; margin-bottom: 0.5rem; }
-    .warning {
-      background: #3a2a00;
-      border-left: 4px solid #ffb300;
-      padding: 0.75rem 1rem;
-      margin: 1rem 0;
-      border-radius: 4px;
-      font-size: 0.9rem;
-    }
-    label { display: block; margin-top: 1rem; font-size: 0.9rem; color: #a0a0a0; }
-    input, textarea, select {
-      width: 100%;
-      padding: 0.6rem;
-      margin-top: 0.3rem;
-      background: #1a1d23;
-      border: 1px solid #2e333d;
-      border-radius: 6px;
-      color: #e6e6e6;
-      font-family: inherit;
-      font-size: 0.95rem;
-    }
-    textarea { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85rem; }
-    button {
-      margin-top: 1rem;
-      padding: 0.65rem 1.3rem;
-      background: #2f6fed;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.95rem;
-    }
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; background: #0f1115; color: #e6e6e6; }
+    h1 { font-size: 1.5rem; }
+    .warning { background: #3a2a00; border-left: 4px solid #ffb300; padding: 1rem; margin: 1rem 0; font-size: 0.9rem; }
+    label { display: block; margin-top: 1rem; color: #a0a0a0; font-size: 0.9rem;}
+    input, textarea { width: 100%; padding: 0.6rem; margin-top: 0.3rem; background: #1a1d23; border: 1px solid #2e333d; border-radius: 6px; color: #e6e6e6; font-family: monospace; box-sizing: border-box;}
+    button { margin-top: 1rem; padding: 0.6rem 1.2rem; background: #2f6fed; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;}
     button:hover { background: #1e5bd8; }
-    button:disabled { background: #3a3f4a; cursor: not-allowed; }
-    .status { margin-top: 1rem; padding: 0.6rem 1rem; border-radius: 6px; display: none; }
-    .status.ok { display: block; background: #0e3a1f; color: #6ee787; }
-    .status.err { display: block; background: #3a0e14; color: #ff7b72; }
-    .row { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .row > div { flex: 1; min-width: 200px; }
+    .status { margin-top: 1rem; padding: 0.6rem; border-radius: 6px; display: none; }
+    .ok { background: #0e3a1f; color: #6ee787; }
+    .err { background: #3a0e14; color: #ff7b72; }
   </style>
 </head>
 <body>
-  <h1>Админ-панель Exsellent</h1>
-
+  <h1>Админ-панель (База Данных)</h1>
   <div class="warning">
-    <strong>Внимание:</strong> для работы нужен GitHub Personal Access Token с правами
-    <code>Contents: Read and write</code> на репозиторий. Токен хранится только в памяти браузера
-    и не сохраняется. Не используйте этот метод на публичном сайте без серверного прокси.
+    <strong>Внимание:</strong> для сохранения нужен GitHub Token (Fine-grained с правами Contents: Read and write). Токен не сохраняется на сервере.
   </div>
 
-  <label>GitHub Token
-    <input type="password" id="token" placeholder="ghp_..." autocomplete="off">
-  </label>
+  <label>GitHub Token <input type="password" id="token" placeholder="ghp_..."></label>
+  <label>Владелец репозитория <input id="owner" value="dgergeleziu-droid"></label>
+  <label>Репозиторий <input id="repo" value="Exsellent-doc"></label>
+  <label>Путь к файлу <input id="path" value="data/administration.json"></label>
 
-  <div class="row">
-    <div>
-      <label>Владелец репозитория
-        <input id="owner" value="dgergeleziu-droid">
-      </label>
-    </div>
-    <div>
-      <label>Репозиторий
-        <input id="repo" value="Exsellent-doc">
-      </label>
-    </div>
-  </div>
-
-  <label>Путь к файлу данных
-    <input id="path" value="data/administration.json">
-  </label>
-
-  <button id="loadBtn" onclick="loadFile()">Загрузить текущие данные</button>
-
+  <button onclick="loadFile()">Загрузить текущие данные</button>
   <div id="editor" style="margin-top:1rem;"></div>
-
   <button id="saveBtn" onclick="saveFile()" style="display:none;">Сохранить изменения</button>
-
   <div class="status" id="status"></div>
 
   <script>
     const apiBase = 'https://api.github.com/repos';
     let currentSha = null;
+    const statusEl = document.getElementById('status');
 
-    function setStatus(message, type) {
-      const el = document.getElementById('status');
-      el.textContent = message;
-      el.className = 'status ' + type;
+    function showStatus(msg, isError) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + (isError ? 'err' : 'ok');
+      statusEl.style.display = 'block';
     }
 
-    function clearStatus() {
-      const el = document.getElementById('status');
-      el.textContent = '';
-      el.className = 'status';
-    }
-
-    // Корректное base64-кодирование UTF-8
-    function encodeBase64(str) {
-      return btoa(unescape(encodeURIComponent(str)));
-    }
-
-    // Корректное base64-декодирование UTF-8
-    function decodeBase64(str) {
-      return decodeURIComponent(escape(atob(str)));
-    }
+    function encodeBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
+    function decodeBase64(str) { return decodeURIComponent(escape(atob(str))); }
 
     async function loadFile() {
-      clearStatus();
       const token = document.getElementById('token').value.trim();
       const owner = document.getElementById('owner').value.trim();
-      const repo  = document.getElementById('repo').value.trim();
-      const path  = document.getElementById('path').value.trim();
-
-      if (!token) return setStatus('Введите GitHub Token.', 'err');
-
-      const url = `${apiBase}/${owner}/${repo}/contents/${path}`;
+      const repo = document.getElementById('repo').value.trim();
+      const path = document.getElementById('path').value.trim();
+      if (!token) return showStatus('Введите токен!', true);
 
       try {
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `token ${token}`,
-            Accept: 'application/vnd.github.v3+json'
-          }
+        const res = await fetch(`${apiBase}/${owner}/${repo}/contents/${path}`, {
+          headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
         });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          return setStatus(`Ошибка загрузки (${res.status}): ${err.message || 'неизвестная ошибка'}`, 'err');
-        }
-
+        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
         const data = await res.json();
         currentSha = data.sha;
-
-        let content;
-        if (Array.isArray(data.content)) {
-          // GitHub API возвращает content с переносами строк
-          content = decodeBase64(data.content.join(''));
-        } else {
-          content = decodeBase64(data.content);
-        }
-
-        // Проверим, что это валидный JSON
-        try {
-          JSON.parse(content);
-        } catch (e) {
-          return setStatus('Файл найден, но содержит невалидный JSON. Исправьте вручную на GitHub.', 'err');
-        }
-
-        document.getElementById('editor').innerHTML =
-          `<label>Содержимое файла (JSON)<textarea id="jsonContent" rows="20">${content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></label>`;
+        
+        let content = Array.isArray(data.content) ? decodeBase64(data.content.join('')) : decodeBase64(data.content);
+        
+        document.getElementById('editor').innerHTML = `<textarea id="jsonContent" rows="15">${content}</textarea>`;
         document.getElementById('saveBtn').style.display = 'inline-block';
-        setStatus('Файл успешно загружен. Можно редактировать.', 'ok');
+        showStatus('Файл загружен. Можете редактировать JSON.', false);
       } catch (e) {
-        setStatus('Сетевая ошибка: ' + e.message, 'err');
+        showStatus('Ошибка загрузки: ' + e.message, true);
       }
     }
 
     async function saveFile() {
-      clearStatus();
       const token = document.getElementById('token').value.trim();
       const owner = document.getElementById('owner').value.trim();
-      const repo  = document.getElementById('repo').value.trim();
-      const path  = document.getElementById('path').value.trim();
-      const content = document.getElementById('jsonContent')?.value;
+      const repo = document.getElementById('repo').value.trim();
+      const path = document.getElementById('path').value.trim();
+      const content = document.getElementById('jsonContent').value;
+      
+      if (!token || !currentSha) return showStatus('Сначала загрузите файл!', true);
 
-      if (!token) return setStatus('Введите GitHub Token.', 'err');
-      if (content === undefined) return setStatus('Сначала загрузите файл.', 'err');
-      if (!currentSha) return setStatus('Нет SHA файла. Загрузите файл заново.', 'err');
-
-      // Проверка на валидный JSON перед отправкой
-      try {
-        JSON.parse(content);
-      } catch (e) {
-        return setStatus('JSON невалиден: ' + e.message, 'err');
-      }
-
-      const url = `${apiBase}/${owner}/${repo}/contents/${path}`;
+      try { JSON.parse(content); } catch (e) { return showStatus('Ошибка: невалидный JSON!', true); }
 
       try {
-        const res = await fetch(url, {
+        const res = await fetch(`${apiBase}/${owner}/${repo}/contents/${path}`, {
           method: 'PUT',
-          headers: {
-            Authorization: `token ${token}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/vnd.github.v3+json'
-          },
+          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: `Обновление ${path}`,
+            message: `Обновление ${path} из админки`,
             content: encodeBase64(content),
             sha: currentSha
           })
         });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          return setStatus(`Ошибка сохранения (${res.status}): ${err.message || 'неизвестная ошибка'}`, 'err');
-        }
-
+        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
         const data = await res.json();
         currentSha = data.content.sha;
-        setStatus('Изменения успешно сохранены в репозиторий!', 'ok');
+        showStatus('Успешно сохранено в GitHub!', false);
       } catch (e) {
-        setStatus('Сетевая ошибка: ' + e.message, 'err');
+        showStatus('Ошибка сохранения: ' + e.message, true);
       }
     }
   </script>
